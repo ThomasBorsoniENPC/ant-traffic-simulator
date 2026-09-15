@@ -1,0 +1,12 @@
+# Noyau de simulation
+numpy>=1.24
+numba>=0.58
+
+# Rendu (images et vidéos). L'export mp4 utilise ffmpeg s'il est installé
+# sur le système ; sinon le rendu bascule automatiquement en gif.
+matplotlib>=3.7
+
+# Confort et outils d'analyse
+tqdm>=4.60          # barres de progression (facultatif : absence gérée)
+pandas>=2.0         # vue tabulaire des trajectoires (antsim.to_dataframe)
+scipy>=1.10         # ajustements (diagramme fondamental, phase 2)

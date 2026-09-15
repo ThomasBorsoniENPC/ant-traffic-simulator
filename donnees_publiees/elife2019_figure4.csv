@@ -1,0 +1,33 @@
+# Points relevés à la main sur la figure 4 de Poissonnier, Motsch, Gautrais,
+# Buhl & Dussutour (2019, eLife) : panneau A (vitesse) et panneau B (flux).
+# Lecture graphique, précision ~0.05 cm/s et ~0.2 fourmi/cm/s.
+# k en fourmis/cm2 ; v converti de cm/s en mm/s ; q en fourmis/cm/s.
+# colonnes : k , v_mm_s , q
+0.5,17.5,0.9
+1.0,17.2,1.7
+1.5,17.2,2.4
+2.0,16.5,3.2
+2.5,16.2,4.0
+3.0,16.0,4.6
+3.5,15.5,5.2
+4.0,15.0,6.1
+4.5,14.7,6.6
+5.0,14.5,7.2
+5.5,14.8,7.5
+6.0,13.8,8.0
+6.5,13.0,8.2
+7.0,12.5,8.6
+7.5,12.0,8.5
+8.0,11.5,8.8
+8.5,11.2,9.0
+9.0,10.8,9.2
+9.5,10.2,9.4
+10.0,10.0,9.6
+10.5,9.5,9.0
+11.0,9.2,8.9
+11.5,8.8,9.8
+12.0,8.5,10.0
+12.5,8.2,10.6
+13.0,8.0,10.2
+13.5,7.8,10.0
+14.0,7.5,10.4

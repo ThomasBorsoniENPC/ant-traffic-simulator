@@ -1,0 +1,34 @@
+# Environnement Python
+.venv/
+__pycache__/
+*.pyc
+
+# Sorties jetables (quickstart, essais)
+out/
+
+# Binaires lourds : vidéos et trajectoires.
+# Ils ne sont PAS versionnés — git stocke chaque version d'un binaire en entier,
+# pour toujours, et ils pèsent 140 Mo contre 4 Mo pour tout le reste.
+# Ce n'est pas une perte : chaque run archivé garde son `config.json`, qui suffit
+# à le rejouer à l'identique (`python scripts/replay.py <config.json>`), après
+# quoi les vidéos se régénèrent avec `viz.save_video`.
+*.mp4
+*.gif
+*.npz
+
+# Données expérimentales : elles n'ont jamais leur place ici (voir
+# scripts/_data_root.py), mais on se protège d'un copier-coller malheureux.
+Data/
+*.mov
+
+# Sous-produits LaTeX
+*.aux
+*.log
+*.out
+*.toc
+*.fdb_latexmk
+*.fls
+*.synctex.gz
+
+# Métadonnées macOS
+.DS_Store
