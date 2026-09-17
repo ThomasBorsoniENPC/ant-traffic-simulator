@@ -170,7 +170,7 @@ def step(state, new_state, xi_cruise, group, tie_sign,
         y_new = yi + dt * u_new * np.sin(t_new)
         x_new, y_new, u_new, t_new = apply_ends(
             x_new, y_new, u_new, t_new, gi, xc, p, uniform[i])
-        y_new, t_new = apply_wall(x_new, y_new, t_new, p)
+        y_new, u_new, t_new = apply_wall(x_new, y_new, u_new, t_new, p, dt)
 
         new_state[0, i] = x_new
         new_state[1, i] = y_new

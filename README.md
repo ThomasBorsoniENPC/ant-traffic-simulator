@@ -265,7 +265,7 @@ Les valeurs par défaut sont celles de la **configuration finale** du rapport
 | Angulaire | `angular_mode` | `field_norm` | — | — |
 | | `k_obj` | 10 | idem | — |
 | | `lambda_theta` | 10 | — | 1/s |
-| | `lambda_max` | 50 | idem | 1/s |
+| | `lambda_max` | **8** | 50 | 1/s |
 | | `force_ref` | 10 | — | — |
 | | `sigma_theta` | 0.3 | absent | rad·s^(−1/2) |
 | Freinage | `l_brake, eps_brake, c_brake, alpha_brake` | 3, 0.7, **300**, 4 | …, **1e3**, … | mm, —, —, — |
@@ -373,6 +373,28 @@ qui veut un format tabulaire.
   ou `slide` (elle est *retirée*, l'agent longe la paroi). Les deux annulent le
   flux normal. Le rapport retient la réflexion spéculaire, qui « évite le
   collage aux parois qu'induit une condition de glissement à haute densité ».
+
+  La correction de cap est **stabilisée** par deux réglages, actifs par défaut.
+  Sans eux, la réflexion est un saut instantané — jusqu'à π en un pas, mesuré à
+  0.195 rad en médiane et 2.65 rad au maximum, contre 0.034 rad pour le braquage
+  libre — qui échappait au plafond angulaire (72 % des réflexions le
+  dépassaient) et entretenait un chattering : 44 % des contacts successifs d'un
+  même agent survenaient en moins de 0.05 s, le dixième à deux pas d'intervalle.
+
+  - `cap_wall_turn` : la correction de cap passe sous le même `lambda_max` que
+    la dynamique angulaire. Deux vitesses de rotation maximales différentes dans
+    un même modèle n'auraient pas de sens.
+  - `wall_cut_normal_speed` : la composante normale *sortante* de la vitesse est
+    retirée, `u ← u·√(1 − (e_θ·n)²)`. Un agent face à la paroi s'arrête et tourne
+    sur place ; un agent quasi tangent garde sa vitesse. La relaxation ramène `u`
+    vers `ξ` dès le cap dégagé : c'est un amortissement transitoire.
+
+  Les deux agissent sur des grandeurs distinctes — le plafond écrase l'amplitude
+  du saut (2.65 → 0.65 rad), la coupure réduit la *fréquence* des contacts
+  (0.36 → 0.30 par agent et par seconde). Le non-flux reste garanti sans
+  condition : il vient du repositionnement de `y` à chaque pas, pas du cap. Ni
+  collage ni condensation (temps à moins de 0.5 mm du mur 0.089 → 0.088, écart-
+  type transverse inchangé). Voir `resultats/paroi_stabilisation/`.
 - **Extrémités** : `torus` (défaut, `x mod L`, `y` conservé — la vision, elle,
   reste bloquée aux extrémités : semi-périodicité) ou `inflow` (l'agent sortant
   est réinjecté à l'entrée de son groupe, `N` constant).

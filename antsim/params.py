@@ -134,7 +134,25 @@ class ModelParams:
     angular_mode: str = "field_norm"
     k_obj: float = 10.0            # intensité de la force d'objectif
     lambda_theta: float = 10.0     # taux de virage (1/s) — mode "fixed"
-    lambda_max: float = 50.0       # taux de virage maximal (1/s) — plafond |theta_dot|
+    lambda_max: float = 8.0        # taux de virage maximal (1/s) — plafond
+                                   # |theta_dot|, appliqué à la loi de braquage
+                                   # ET à la correction de cap à la paroi
+                                   # (cf. `cap_wall_turn`). La valeur
+                                   # historique, 50, ne mordait jamais : le taux
+                                   # de virage médian est de 2.3 rad/s et son p90
+                                   # de 5.9, donc 0 % des pas l'atteignaient. À 8
+                                   # le plafond agit sur 3.6 % des pas, dans la
+                                   # seule queue de la distribution.
+    cap_wall_turn: bool = True     # la correction de cap à la paroi est-elle
+                                   # soumise à `lambda_max` ? Sans elle, la
+                                   # réflexion spéculaire est un saut instantané
+                                   # (jusqu'à pi) qui échappe au plafond et
+                                   # entretient un chattering contre la paroi.
+    wall_cut_normal_speed: bool = True   # retirer la composante normale
+                                   # SORTANTE de la vitesse au contact d'une
+                                   # paroi : u <- u * |composante tangentielle|.
+                                   # Un agent face au mur s'arrête et tourne sur
+                                   # place au lieu de pousser dedans.
     force_ref: float = 10.0        # échelle de force de référence — mode "saturating"
     sigma_theta: float = 0.3       # bruit angulaire (rad/s^{1/2}) : brise-symétrie.
                                    # ABSENT du modèle de référence (mettre 0 pour le
@@ -359,7 +377,8 @@ _INT_FIELDS = (
     "geom_type", "angular_mode", "wall_mode", "x_mode", "wall_law",
     "use_brake", "use_avoid_steer", "use_comm", "use_repulse",
     "use_overtake", "use_follow", "use_wall_attraction",
-    "use_wall_escape", "overtake_smooth_gate",
+    "use_wall_escape", "overtake_smooth_gate", "cap_wall_turn",
+    "wall_cut_normal_speed",
 )
 
 #: Champs flottants, dans l'ordre de construction du NamedTuple.
