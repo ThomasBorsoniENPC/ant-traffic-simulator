@@ -17,6 +17,9 @@ Usage minimal
     save_run(result, "out/demo")
 """
 
+import os as _os
+from pathlib import Path as _Path
+
 from .params import (
     CODE_VERSION,
     ANGULAR_MODES,
@@ -32,6 +35,22 @@ from .params import (
     make_model,
     save_config,
 )
+from .params import KERNEL_FINGERPRINT as _KERNEL_FINGERPRINT
+
+# --- cache Numba : un répertoire PAR DISPOSITION DE CHAMPS -----------------
+# À régler AVANT le premier import de Numba (ci-dessous), qui lit la variable
+# une seule fois. Numba identifie un type NamedTuple par le nom de sa classe et
+# les types de ses membres, jamais par les noms de champs : deux versions de
+# `KERNEL_FIELDS` de même longueur et de mêmes types sont indistinguables pour
+# lui, et le code machine compilé pour l'une serait resservi à l'autre, chaque
+# paramètre étant alors lu à la mauvaise position. Isoler le cache par
+# empreinte rend cette confusion impossible, sans jamais rien supprimer : une
+# disposition périmée garde simplement son répertoire dans son coin.
+# `NUMBA_CACHE_DIR` déjà posé par l'utilisateur est respecté.
+if "NUMBA_CACHE_DIR" not in _os.environ:
+    _os.environ["NUMBA_CACHE_DIR"] = str(
+        _Path(__file__).resolve().parent / "__nbcache__" / _KERNEL_FINGERPRINT)
+
 from .engine import RunResult, make_groups, run, seed_numba
 from .io import load_run, replay, save_run, to_dataframe
 

@@ -83,3 +83,74 @@ def test_seed_only_source_of_randomness_in_engine():
     text = (Path(antsim.__file__).parent / "engine.py").read_text()
     uses = re.findall(r"np\.random\.\w+", text)
     assert set(uses) <= {"np.random.seed", "np.random.default_rng", "np.random.Generator"}, uses
+
+
+def test_numba_cache_is_isolated_per_field_layout():
+    """Le cache disque de Numba doit être séparé PAR DISPOSITION DE CHAMPS.
+
+    Numba identifie un type NamedTuple par le nom de sa classe et les types de
+    ses membres, jamais par les noms de champs. Deux versions successives de
+    `KERNEL_FIELDS` de même longueur et de mêmes types (ici : des int64 puis
+    des float64) sont donc indistinguables pour lui, et le code machine
+    compilé pour l'une lui est resservi pour l'autre — chaque paramètre étant
+    alors lu à la MAUVAISE POSITION. La régression observée (freinage et
+    braquage simultanément faux, sans qu'aucun paramètre ni aucune ligne de
+    code ne soit en cause) est invisible aux autres tests, qui recompilent
+    tous dans le même processus.
+
+    La parade est un répertoire de cache par empreinte. On ne renomme PAS la
+    classe : Numba pickle le type dans son index, et un nom qui change casse la
+    relecture des index déjà écrits (AttributeError au lieu d'une simple
+    recompilation).
+    """
+    import hashlib
+    import os
+
+    from antsim import params as P
+
+    expected = hashlib.blake2s(
+        "|".join(P.KERNEL_FIELDS).encode(), digest_size=4).hexdigest()
+    assert P.KERNEL_FINGERPRINT == expected
+    assert P.KernelParams.__name__ == "KernelParams", (
+        "le nom de la classe doit rester stable pour que Numba puisse "
+        "dépickler ses index de cache déjà écrits.")
+    assert expected in os.environ.get("NUMBA_CACHE_DIR", ""), (
+        "le répertoire de cache Numba ne porte pas l'empreinte des champs : "
+        "une disposition périmée pourrait être resservie.")
+
+    # Une disposition DIFFÉRENTE (mêmes champs, deux permutés : même longueur,
+    # mêmes types) doit donner une empreinte différente, donc un autre cache.
+    permuted = (P.KERNEL_FIELDS[1], P.KERNEL_FIELDS[0]) + P.KERNEL_FIELDS[2:]
+    other = hashlib.blake2s("|".join(permuted).encode(), digest_size=4).hexdigest()
+    assert other != expected
+
+
+def test_no_kernel_field_is_declared_but_unused():
+    """Tout champ de `ModelParams` transmis au noyau doit y être lu, et tout
+    champ non transmis ne doit pas se faire passer pour un paramètre actif.
+
+    `n_brake` avait survécu ainsi : documenté comme exposant du profil radial,
+    absent de `KERNEL_FIELDS`, donc sans le moindre effet.
+    """
+    from antsim import ModelParams
+    from antsim import params as P
+
+    package = Path(antsim.__file__).parent
+    sources = "\n".join(path.read_text() for path in sorted(package.glob("*.py"))
+                        if path.name != "params.py")
+
+    orphans = []
+    for name in ModelParams().__dict__:
+        if name in P.KERNEL_FIELDS:
+            continue
+        if re.search(rf"\bp\.{name}\b", sources):
+            continue                      # lu autrement (hors noyau compilé)
+        orphans.append(name)
+
+    known = {"geom_type", "angular_mode", "wall_mode", "x_mode", "wall_law",
+             "brake_law", "length", "height", "amplitude", "wavelength"}
+    unexpected = [n for n in orphans if n not in known
+                  and not re.search(rf"\b{n}\b", sources)]
+    assert not unexpected, (
+        "champs déclarés mais jamais lus (paramètres fantômes) : "
+        + ", ".join(unexpected))

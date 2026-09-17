@@ -32,3 +32,6 @@ Data/
 
 # Métadonnées macOS
 .DS_Store
+
+# Cache Numba, isolé par empreinte de KERNEL_FIELDS (cf. antsim/__init__.py)
+__nbcache__/

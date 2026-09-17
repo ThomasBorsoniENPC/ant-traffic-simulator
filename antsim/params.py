@@ -32,6 +32,7 @@ paramètre <-> équation.
 
 from __future__ import annotations
 
+import hashlib
 import json
 from collections import namedtuple
 from dataclasses import asdict, dataclass, fields
@@ -379,6 +380,25 @@ _FLOAT_FIELDS = (
 )
 
 KERNEL_FIELDS = _INT_FIELDS + _FLOAT_FIELDS
+
+#: Empreinte de la LISTE DES CHAMPS du noyau.
+#:
+#: Numba nomme un type NamedTuple d'après `cls.__name__` et la liste des types
+#: de ses membres — PAS d'après les noms de champs. Comme les champs sont ici
+#: homogènes (des int64 puis des float64), deux versions successives de
+#: `KERNEL_FIELDS` de même longueur produisent un type de MÊME NOM : le cache
+#: disque de Numba (`cache=True`) resservait alors du code machine compilé pour
+#: un ORDRE DE CHAMPS PÉRIMÉ, qui lisait chaque paramètre à la mauvaise
+#: position. Symptôme observé : freinage et braquage simultanément faux, sans
+#: qu'aucun paramètre ni aucune ligne de code ne soit en cause.
+#:
+#: La parade est dans `__init__.py` : le RÉPERTOIRE de cache de Numba porte
+#: cette empreinte, donc une disposition différente écrit dans un répertoire
+#: différent. On ne touche PAS au nom de la classe : Numba pickle le type dans
+#: son index de cache, et un nom qui change casserait la relecture des index
+#: déjà écrits (AttributeError au lieu d'une simple recompilation).
+KERNEL_FINGERPRINT = hashlib.blake2s(
+    "|".join(KERNEL_FIELDS).encode(), digest_size=4).hexdigest()
 
 #: Le NamedTuple passé en ARGUMENT à chaque fonction compilée.
 KernelParams = namedtuple("KernelParams", KERNEL_FIELDS)
